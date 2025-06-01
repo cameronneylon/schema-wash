@@ -41,8 +41,7 @@ import json_lines
 import jsonlines
 from bigquery_schema_generator.generate_schema import flatten_schema_map, SchemaGenerator
 
-import cleaner_functions
-import filter_records
+from schemawash import cleaner_functions, filter_records
 
 def yield_jsonl(file_path: str):
     """Return or yield row of a JSON lines file as a dictionary. If the file
@@ -120,35 +119,39 @@ def sort_schema(input_file: Path):
         return sorted_schema
 
     # Load the JSON schema from a string
-    with open(input_file, mode="r") as f:
+    with open(input_file, mode="r", encoding='utf-8') as f:
         data = json.load(f)
 
     # Sort the schema
     sorted_json_schema = sort_schema_func(data)
 
     # Save the schema
-    with open(input_file, mode="w") as f:
+    with open(input_file, mode="w", encoding='utf-8') as f:
         json.dump(sorted_json_schema, f, indent=2)
 
 
-def list_jsonl_files(folder_path):
-    # Use glob to recursively find all .jsonl files
-    jsonl_files = glob.glob(os.path.join(folder_path, "**", "*.json.gz"), recursive=True)
-    return jsonl_files
+def list_import_files(folder_path, file_suffix):
+    """Recursively identify all files within a folder that match the specified suffix"""
+
+    filepaths = Path(folder_path / '**' / '*').with_suffix(file_suffix)
+    filelist = glob.glob(filepaths, recursive=True)
+    return filelist
 
 
-def transform_object(obj, cleaners=None):
-    if cleaners:
-        for cleaner in cleaners:
-            cleaner_function = getattr(cleaner_functions, cleaner.get('function'))
-            params = cleaner.get('params')
-            cleaner_function(obj,**params)
+def clean_object(obj, cleaners=[]):
+    """Run the specified list of cleaner functions from config over an individual object"""
+    
+    for cleaner in cleaners:
+        cleaner_function = getattr(cleaner_functions, cleaner.get('function'))
+        params = cleaner.get('params')
+        cleaner_function(obj,**params)
 
 
 def transform(input_path: str, 
               output_path: str, 
               config, 
               schema_keep_nulls: bool=True) -> Tuple[str, bool, OrderedDict, list]:
+    """Process a chunk of files as provided by the ProcessPoolExecutor"""
     
     # Parse the config elements
     filters = config.get('filter_records')
@@ -166,21 +169,24 @@ def transform(input_path: str,
     # print(f"generate_schema {input_path}")
     empty_file = True
     lines = 0
-    with open(output_path, mode="w") as f:
+    with open(output_path, mode='w', encoding='utf-8') as f:
         with jsonlines.Writer(f) as writer:
             for obj in yield_jsonl(input_path):
                 if filters:
+                    # Test each filter placing bool result in an array
                     if False in [
                         filter_records.filter_single_record(
                             obj=obj,
                             path=filter.get('path'),
-                            value=filter.get('value')
+                            value=filter.get('value'),
+                            desired_test_result=filter.get('desired_test_result', True)
                             ) for filter in filters
                             ]:
                         continue
                 
                 empty_file = False
-                transform_object(obj, cleaners)
+                if cleaners:
+                    clean_object(obj, cleaners)
                 writer.write(obj)
                 lines += 1
 
@@ -215,15 +221,16 @@ def generate_schema_for_dataset(input_folder: Path,
                                 output_folder: Path, 
                                 config_path: Union[Path, str],
                                 max_workers: int=os.cpu_count(),
-                                schema_keep_nulls: bool=True
+                                schema_keep_nulls: bool=True,
+                                file_suffix: str = '.jsonl.gz'
                                 ):
     merged_schema_map = OrderedDict()
     i = 1
     lines = 0
-    files = list_jsonl_files(str(input_folder))
+    files = list_import_files(input_folder, file_suffix=file_suffix)
     total_files = len(files)
     config_path = Path(config_path)
-    with open(config_path, 'r') as f:
+    with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     
     print(datetime.datetime.now())
@@ -231,7 +238,7 @@ def generate_schema_for_dataset(input_folder: Path,
     print(f'Config path is {config_path}')
 
     for c, chunk in enumerate(get_chunks(input_list=files, chunk_size=500)):
-        with ProcessPoolExecutor(max_workers=12) as executor:
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = []
 
             for input_path in chunk:
@@ -247,7 +254,7 @@ def generate_schema_for_dataset(input_folder: Path,
                     lines += written_lines
                     if schema_error:
                         msg = f"File {input_path}: {schema_error}"
-                        with open(input_folder / "errors.txt", mode="a") as f:
+                        with open(input_folder / "errors.txt", mode="a", encoding='utf-8') as f:
                             f.write(f"{msg}\n")
                         print(msg)
 
@@ -265,8 +272,8 @@ def generate_schema_for_dataset(input_folder: Path,
     merged_schema = flatten_schema(schema_map=merged_schema_map)
 
     # Save schema to file
-    generated_schema_path = os.path.join(input_folder, f"schema.json")
-    with open(generated_schema_path, mode="w") as f_out:
+    generated_schema_path = os.path.join(input_folder, "schema.json")
+    with open(generated_schema_path, mode="w", encoding='utf-8') as f_out:
         json.dump(merged_schema, f_out, indent=2)
 
     sort_schema(Path(generated_schema_path))
@@ -308,15 +315,26 @@ if __name__ == "__main__":
         default=True,
         help="Bigquery Schema Generator option to keep elements that are never populated (default: True)"
     )
-    
     parser.add_argument(
         "--max_workers",
         type=int,
         default=os.cpu_count(),
         help="The maximum number of workers (default: number of CPUs)",
     )
+    parser.add_argument(
+        '--file_suffix',
+        type=str,
+        default='jsonl.gz',
+        help='File suffix for the target files for processing (default: ".jsonl.gz")'
+    )
 
     # Parse the arguments
     args = parser.parse_args()
 
-    generate_schema_for_dataset(args.input_folder, args.output_folder, args.config_path, args.schema_keep_nulls, args.max_workers)
+    generate_schema_for_dataset(
+        args.input_folder, 
+        args.output_folder, 
+        args.config_path, 
+        args.schema_keep_nulls, 
+        args.max_workers,
+        args.file_suffix)
