@@ -1,3 +1,6 @@
-json-lines
-jsonlines
-bigquery_schema_generator
+attrs==25.3.0
+bigquery-schema-generator==1.6.1
+json-lines==0.5.0
+jsonlines==4.0.0
+PyYAML==6.0.2
+six==1.17.0
