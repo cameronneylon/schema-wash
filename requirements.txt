@@ -1,0 +1,3 @@
+json-lines
+jsonlines
+bigquery_schema_generator

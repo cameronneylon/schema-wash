@@ -1,0 +1,59 @@
+datasource: datacite
+table: works
+lastupdated: 20250601
+updatedby: Cameron Neylon
+
+cleaners:
+
+  - clean geolocations:
+    function: transform_geo_locations
+    path: 
+      - attributes
+      - geoLocations
+
+  - clean container volume:
+    function: normalize_to_string_or_none
+    path: 
+      - attributes
+      - container
+      - volume
+
+  - clean container issue:
+    function: normalize_to_string_or_none
+    path: 
+      - attributes
+      - container
+      - issue
+
+  - clean container firstPage:
+    function: normalize_to_string_or_none
+    path: 
+      - attributes
+      - container
+      - firstPage
+
+  - clean container lastPage:
+    function: normalize_to_string_or_none
+    path: 
+      - attributes
+      - container
+      - lastPage
+
+  - clean published date to string or null:
+    function: normalize_to_string_or_none
+    path: 
+      - attributes
+      - published
+
+  - remove nulls from format array:
+    function: remove_nulls_from_list_field
+    path:
+      - attributes
+      - formats
+
+  - remove nulls from sizes array:
+    function: remove_nulls_from_list_field
+    path:
+      - attributes
+      - sizes
+

@@ -1,0 +1,10 @@
+datasource: openaire
+table: relations
+table_part: community
+lastupdated: 20250601
+updatedby: Cameron Neylon
+
+filter_records:
+  - path: 
+    - sourceType
+    value: community

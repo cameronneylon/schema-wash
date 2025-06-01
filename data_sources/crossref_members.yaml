@@ -1,0 +1,20 @@
+datasource: crossref
+table: members
+lastupdated: 20250601
+updatedby: Cameron Neylon
+
+cleaners:
+
+  - function: nested_array_to_dict
+    params:
+      path: 
+        - breakdowns
+        - dois-by-issued-year
+      keys:
+        - year
+        - count
+
+  - function: remove_nulls_from_list_field
+    params:
+      path: 
+        - ISSN

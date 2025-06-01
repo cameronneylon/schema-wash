@@ -1,0 +1,11 @@
+datasource: openaire
+table: relations
+table_part: Cites
+lastupdated: 20250601
+updatedby: Cameron Neylon
+
+filter_records:
+  - Target is relationType=Cites:
+    path: 
+      - relationType
+    value: Cites
