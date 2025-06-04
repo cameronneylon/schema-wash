@@ -1,0 +1,16 @@
+datasource: openaire
+table: relations
+table_part: products_relatedTo
+lastupdated: 20250604
+updatedby: Cameron Neylon
+
+filter_records:
+  - path: 
+    - sourceType
+    value: product
+  - path: 
+    - targetType
+    value: product
+  - path: 
+    - relType_name
+    value: IsRelatedTo

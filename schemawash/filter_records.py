@@ -3,7 +3,7 @@
 # Licensed under the MIT License (see LICENSE)
 
 from typing import Union
-from schemawash.utils import target_from_path
+from utils import target_from_path
 
 def filter_single_record(obj: dict, path: Union[list, str], value, desired_test_result)->bool:
     """Return True if element at path == value, unless desired result is False then False"""

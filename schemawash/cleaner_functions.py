@@ -33,7 +33,7 @@
 
 from typing import Union
 
-from schemawash.utils import target_from_path
+from utils import target_from_path
 
 def remove_nulls_from_list_field(obj: dict, path: Union[list, str]):
     target, field = target_from_path(obj, path)

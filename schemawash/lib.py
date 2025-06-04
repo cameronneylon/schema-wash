@@ -41,7 +41,8 @@ import json_lines
 import jsonlines
 from bigquery_schema_generator.generate_schema import flatten_schema_map, SchemaGenerator
 
-from schemawash import cleaner_functions, filter_records
+import cleaner_functions
+import filter_records
 
 def yield_jsonl(file_path: str):
     """Return or yield row of a JSON lines file as a dictionary. If the file
@@ -133,7 +134,7 @@ def sort_schema(input_file: Path):
 def list_import_files(folder_path, file_suffix):
     """Recursively identify all files within a folder that match the specified suffix"""
 
-    filepaths = Path(folder_path / '**' / '*').with_suffix(file_suffix)
+    filepaths = os.path.join(folder_path, '**', f'*.{file_suffix}')
     filelist = glob.glob(filepaths, recursive=True)
     return filelist
 
@@ -243,7 +244,7 @@ def generate_schema_for_dataset(input_folder: Path,
 
             for input_path in chunk:
                 output_path = str(output_folder / Path(input_path).relative_to(input_folder)).replace(
-                    ".json.gz", ".jsonl"
+                    file_suffix, ".jsonl"
                 )
                 futures.append(executor.submit(transform, input_path, output_path, config, schema_keep_nulls))
 
