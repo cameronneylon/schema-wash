@@ -134,7 +134,7 @@ def sort_schema(input_file: Path):
 def list_import_files(folder_path, file_suffix):
     """Recursively identify all files within a folder that match the specified suffix"""
 
-    filepaths = os.path.join(folder_path, '**', f'*.{file_suffix}')
+    filepaths = os.path.join(folder_path, '**', f'*{file_suffix}')
     filelist = glob.glob(filepaths, recursive=True)
     return filelist
 
@@ -311,16 +311,16 @@ if __name__ == "__main__":
     
     # Optional arguments with default value from os.cpu_count()
     parser.add_argument(
-        "--schema_keep_nulls",
-        type=bool,
-        default=True,
-        help="Bigquery Schema Generator option to keep elements that are never populated (default: True)"
-    )
-    parser.add_argument(
         "--max_workers",
         type=int,
         default=os.cpu_count(),
         help="The maximum number of workers (default: number of CPUs)",
+    )
+    parser.add_argument(
+        "--schema_keep_nulls",
+        type=bool,
+        default=True,
+        help="Bigquery Schema Generator option to keep elements that are never populated (default: True)"
     )
     parser.add_argument(
         '--file_suffix',
@@ -336,6 +336,6 @@ if __name__ == "__main__":
         args.input_folder, 
         args.output_folder, 
         args.config_path, 
-        args.schema_keep_nulls, 
         args.max_workers,
+        args.schema_keep_nulls, 
         args.file_suffix)
