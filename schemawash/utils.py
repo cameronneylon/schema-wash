@@ -3,6 +3,8 @@
 # Licensed under the MIT License (see LICENSE)
 
 from typing import Union, Any
+from jsonlines.jsonlines import JSONScalar, JSONCollection, JSONValue
+
 
 def target_from_path(obj:dict, path: Union[list,str])->(tuple[dict, Any] | tuple[None, None]):
     """Given an object dict and a path or field, return] the target object and field"""
