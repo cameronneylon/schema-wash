@@ -41,8 +41,8 @@ import json_lines
 import jsonlines
 from bigquery_schema_generator.generate_schema import flatten_schema_map, SchemaGenerator
 
-import cleaner_functions
-import filter_records
+from schemawash import cleaner_functions
+from schemawash import filter_records
 
 def yield_jsonl(file_path: str):
     """Return or yield row of a JSON lines file as a dictionary. If the file

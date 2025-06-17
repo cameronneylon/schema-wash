@@ -4,17 +4,19 @@
 
 from typing import Union
 from jsonlines.jsonlines import JSONScalar, JSONCollection, JSONValue
-from utils import target_from_path
+from schemawash.utils import target_from_path
 
-def filter_single_record(obj: dict, path: Union[list, str], value: Union[JSONScalar, list], desired_test_result)->bool:
+def filter_single_record(obj: dict, path: Union[list, str], value: Union[JSONScalar, list], desired_test_result: bool=True)->bool:
     """Return True if element at path == value, unless desired result is False then False"""
     
     target, field = target_from_path(obj, path)
-    result = target.get(field) == value
+    result = target.get(field)
 
-    if isinstance(desired_test_result, list):
-        return True in [result == test for test in desired_test_result]
-    return result == desired_test_result
+    if isinstance(value, list):
+        test = True in [result == test for test in value]
+    else:
+        test = result == value
+    return test == desired_test_result
 
 
 def filter_record_element(obj: dict, path)->None:
