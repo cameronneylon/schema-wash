@@ -45,6 +45,13 @@ cleaners:
       - attributes
       - published
 
+  - clean descriptions to string or none:
+    function: normalize_to_string_or_none
+    path:
+      - attributes
+      - descriptions
+      - description
+
   - remove nulls from format array:
     function: remove_nulls_from_list_field
     path:
@@ -56,4 +63,52 @@ cleaners:
     path:
       - attributes
       - sizes
+
+  - convert sizes to all be strings:
+    function: normalize_to_string_or_none
+    path:
+      - attributes
+      - sizes
+
+  - convert identifiers.identifier to strings:
+    function: normalize_to_string_or_none
+    path:
+      - attributes
+      - identifiers
+      - identifier
+
+  - convert alternateIdentifiers.alternateIdentifier to strings:
+    function: normalize_to_string_or_none
+    path:
+      - attributes
+      - alternateIdentifiers
+      - alternateIdentifier
+
+  - convert relatedIdentifiers.relatedIdentifier to strings:
+    function: normalize_to_string_or_none
+    path:
+      - attributes
+      - relatedIdentifiers
+      - relatedIdentifier
+
+  - convert dates.date to strings:
+    function: normalize_to_string_or_none
+    path:
+      - attributes
+      - dates
+      - date
+
+  - normalize related items:
+    function: normalize_related_item
+    path:
+      - attributes
+      - relatedItems
+
+  - normalize award URI to string:
+    function: normalize_to_string_or_none
+    path:
+      - attributes
+      - fundingReferences
+      - awardUri
+
 

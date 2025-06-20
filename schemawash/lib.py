@@ -41,8 +41,7 @@ import json_lines
 import jsonlines
 from bigquery_schema_generator.generate_schema import flatten_schema_map, SchemaGenerator
 
-from schemawash import cleaner_functions
-from schemawash import filter_records
+from schemawash import cleaner_functions, filter_records, utils
 
 def yield_jsonl(file_path: str):
     """Return or yield row of a JSON lines file as a dictionary. If the file
@@ -144,8 +143,16 @@ def clean_object(obj, cleaners=[]):
     
     for cleaner in cleaners:
         cleaner_function = getattr(cleaner_functions, cleaner.get('function'))
-        params = cleaner.get('params')
-        cleaner_function(obj,**params)
+        path = cleaner.get('path')
+        params = cleaner.get('params', {})
+        try:
+            cleaner_function(obj, path, **params)
+        except AttributeError as e:
+            e.add_note(f"Error on cleaning, object is\n{obj}")
+            e.add_note(f"Path is {path}")
+            target, field = utils.target_from_path(obj, path)
+            e.add_note(f"Target element is {target}")
+            raise
 
 
 def transform(input_path: str, 
@@ -223,7 +230,8 @@ def generate_schema_for_dataset(input_folder: Path,
                                 config_path: Union[Path, str],
                                 max_workers: int=os.cpu_count(),
                                 schema_keep_nulls: bool=True,
-                                file_suffix: str = '.jsonl.gz'
+                                file_suffix: str = '.jsonl.gz',
+                                verbose: bool=True
                                 ):
     merged_schema_map = OrderedDict()
     i = 1
@@ -257,13 +265,14 @@ def generate_schema_for_dataset(input_folder: Path,
                         msg = f"File {input_path}: {schema_error}"
                         with open(input_folder / "errors.txt", mode="a", encoding='utf-8') as f:
                             f.write(f"{msg}\n")
-                        print(msg)
+                        if verbose: print(msg)
 
                     # Merge the schemas from each process. Each data file could have more fields than others.
                     try:
                         merged_schema_map = merge_schema_maps(to_add=schema_map, old=merged_schema_map)
                     except Exception as e:
                         print(f"merge_schema_maps error: {e}")
+                        print(msg)
 
                 percent = i / total_files * 100
                 print(f"Progress: {i} / {total_files}, {percent:.2f}%. {lines} lines written.")

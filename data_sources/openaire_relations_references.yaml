@@ -1,0 +1,12 @@
+datasource: openaire
+table: relations
+table_part: references
+lastupdated: 20250617
+updatedby: Cameron Neylon
+
+filter_records:
+  - Target is relationType=References:
+    path: 
+      - relType
+      - name
+    value: References

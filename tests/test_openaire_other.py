@@ -39,7 +39,6 @@ class TestFilters(unittest.TestCase):
             value=['text2', 'text'],
             desired_test_result=False
         )
-        print(t1)   
         assert t1
 
         assert not t2     
